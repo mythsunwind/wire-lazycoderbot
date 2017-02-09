@@ -1,0 +1,9 @@
+.DS_Store
+.idea/
+.auth
+.environment
+images/*
+target/
+certs/
+crypto/
+*.iml

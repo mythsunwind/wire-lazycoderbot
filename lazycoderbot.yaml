@@ -1,0 +1,23 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 8049
+    - type: https
+      port: 8060
+      keyStorePath: certs/keystore.jks
+      keyStorePassword: 123456
+      certAlias: myservercert
+      validateCerts: false
+      validatePeers: false
+
+  adminConnectors:
+    - type: http
+      port: 8061
+#  requestLog:
+#    appenders: []
+
+auth: Bearer XYZ
+name: Lazy Coder Bot
+accent: 1
+smallProfile: 3-2-50425fa8-7924-4aaf-ba1e-a3a38cd87c6c
+bigProfile: 3-2-3a348e06-4e39-40a1-b47b-11c360b534d2
