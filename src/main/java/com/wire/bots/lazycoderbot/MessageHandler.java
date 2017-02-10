@@ -34,6 +34,7 @@ public class MessageHandler extends MessageHandlerBase {
     private static final String API_URL = "https://api.stackexchange.com";
 
     private BotConfig config;
+    private HashMap<Integer, String> questions = new HashMap<>();
     private HashMap<String, String> lastAnswers = new HashMap<>();
 
     public MessageHandler(BotConfig config) {
@@ -80,6 +81,7 @@ public class MessageHandler extends MessageHandlerBase {
                         } else {
                             String questionIds = "";
                             for (StackOverflowQuestion item : search.items) {
+                                questions.put(item.question_id, item.title);
                                 if (questionIds.isEmpty()) {
                                     questionIds = String.valueOf(item.question_id);
                                 } else {
@@ -105,8 +107,10 @@ public class MessageHandler extends MessageHandlerBase {
                                 if (answers.items.size() > 0) {
                                     StackOverflowAnswer answer = answers.items.get(0);
                                     String body = sanatizeBody(replaceWithMarkDown(answer.body));
-                                    client.sendText(body + "\n*Answered by " + answer.owner.display_name + " on* " + answer
-                                            .link);
+                                    String question = questions.get(answer.question_id);
+                                    client.sendText("**" + question + "**\n"
+                                            + body + "\n"
+                                            +"*Answered by " + answer.owner.display_name + " on* " + answer.link);
                                 } else {
                                     client.sendText("No answers");
                                 }

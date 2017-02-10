@@ -4,7 +4,7 @@ public class BotConfig extends com.wire.bots.sdk.Configuration {
 
     public String name;
     public int accent;
-    private String api_key;
+    public String api_key;
 
     public String getName() {
         return name;
