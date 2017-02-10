@@ -165,7 +165,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private String getLanguage(String message) {
-        String supportedLanguages = "(java|python|javascript|swift|perl|html|css|c++|c#|bash)";
+        String supportedLanguages = "(java|python|javascript|swift|perl|html|css|c++|c#|bash|scala|haskell|prolog)";
         Pattern pattern = Pattern.compile(String.format("^%s .*$", supportedLanguages));
         Matcher m = pattern.matcher(message);
         if (m.find()) {
