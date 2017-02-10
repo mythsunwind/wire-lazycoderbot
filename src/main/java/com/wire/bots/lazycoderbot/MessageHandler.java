@@ -32,7 +32,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     private static final String INFOTEXT = "Hi, I'm Lazy Coder Bot!"
             + " I search for complete solutions for you on stackoverflow when you're too lazy to code stuff yourself."
-            + " I support many languages. Just send a text with a language as first word. Example: **java bubblesort**";
+            + " I support many languages. Just send a text with a language as first word.\nExample: **java bubblesort**";
     private static final String API_URL = "https://api.stackexchange.com";
 
     private BotConfig config;
@@ -236,4 +236,13 @@ public class MessageHandler extends MessageHandlerBase {
         return config.getAccent();
     }
 
+    @Override
+    public String getSmallProfilePicture() {
+        return config.getSmallProfile();
+    }
+
+    @Override
+    public String getBigProfilePicture() {
+        return config.getBigProfile();
+    }
 }
