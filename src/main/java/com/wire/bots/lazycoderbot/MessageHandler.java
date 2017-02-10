@@ -1,6 +1,9 @@
 package com.wire.bots.lazycoderbot;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.wire.bots.lazycoderbot.models.StackOverflowAnswer;
+import com.wire.bots.lazycoderbot.models.StackOverflowAnswers;
+import com.wire.bots.lazycoderbot.models.StackOverflowQuestion;
 import com.wire.bots.lazycoderbot.models.StackOverflowSearch;
 import com.wire.bots.sdk.Logger;
 import com.wire.bots.sdk.MessageHandlerBase;
@@ -13,15 +16,9 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +32,7 @@ public class MessageHandler extends MessageHandlerBase {
     private static final String API_URL = "https://api.stackexchange.com";
 
     private BotConfig config;
-    private HashMap<String, String> lastQueries = new HashMap<>();
+    private HashMap<String, String> lastAnswers = new HashMap<>();
 
     public MessageHandler(BotConfig config) {
         this.config = config;
@@ -49,30 +46,82 @@ public class MessageHandler extends MessageHandlerBase {
             String message = msg.getText();
 
             if (message != null) {
-                if(message.toLowerCase().equals("more") && message.equals(lastQueries.get(client.getConversationId()))) {
-                    // show another answer
+                if (message.toLowerCase().equals("more") && lastAnswers.containsKey(client.getConversationId())) {
+                    client.sendText("Feature not implemented yet!");
+                    return;
                 }
                 if (isValidQuery(message)) {
-                    lastQueries.put(client.getConversationId(), message);
                     String language = getLanguage(message);
                     ClientConfig cfg = new ClientConfig(JacksonJsonProvider.class);
                     JerseyClient http = JerseyClientBuilder.createClient(cfg);
                     Response response = http.target(API_URL)
+                            .path("2.2")
                             .path("search")
-                            .queryParam("order","desc")
+                            .queryParam("order", "desc")
                             .queryParam("sort", "votes")
                             .queryParam("tagged", language)
                             .queryParam("site", "stackoverflow")
                             .queryParam("intitle", message.substring(language.length()))
                             .request(MediaType.APPLICATION_JSON)
                             .get();
-                    response.readEntity(StackOverflowSearch.class);
+                    if (!response.hasEntity()) {
+                        client.sendText("No matching question found! You have to sit down and write the code yourself!");
+                    } else {
+                        StackOverflowSearch search = response.readEntity(StackOverflowSearch.class);
+                        if (search.quota_remaining < 1) {
+                            client.sendText("Quota of stackoverflow api exceeded");
+                        } else {
+
+                            String questionIds = "";
+                            for (StackOverflowQuestion item : search.items) {
+                                if (questionIds.isEmpty()) {
+                                    questionIds = String.valueOf(item.question_id);
+                                } else {
+                                    questionIds = questionIds + ";" + item.question_id;
+                                }
+                            }
+                            response = http.target(API_URL)
+                                    .path("2.2")
+                                    .path("questions")
+                                    .path(String.valueOf(questionIds))
+                                    .path("answers")
+                                    .queryParam("order", "desc")
+                                    .queryParam("sort", "votes")
+                                    .queryParam("site", "stackoverflow")
+                                    .queryParam("filter", "!-*f(6s6U7ofL")
+                                    .request(MediaType.APPLICATION_JSON)
+                                    .get();
+                            StackOverflowAnswers answers = response.readEntity(StackOverflowAnswers.class);
+                            if (answers.quota_remaining < 1) {
+                                client.sendText("Quota of stackoverflow api exceeded");
+                            } else {
+                                if (answers.items.size() > 0) {
+                                    StackOverflowAnswer answer = answers.items.get(0);
+                                    String body = sanatizeBody(replaceWithMarkDown(answer.body));
+                                    client.sendText(body + "\n\nAnswered by " + answer.owner.display_name + " on " +
+                                            "stackoverflow");
+                                } else {
+                                    client.sendText("No answers");
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
             Logger.error(e.getMessage());
         }
+    }
+
+    private String sanatizeBody(String body) {
+        return body.replaceAll("\\<.*?>", "");
+    }
+
+    private String replaceWithMarkDown(String body) {
+        body = body.replaceAll("<\\/?em>", "**");
+        body = body.replaceAll("<\\/?code>", "```");
+        return body;
     }
 
     private boolean isValidQuery(String message) {

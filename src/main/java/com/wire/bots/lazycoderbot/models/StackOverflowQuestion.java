@@ -6,18 +6,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StackOverflowSearch {
+public class StackOverflowQuestion {
 
     @JsonProperty
-    public List<StackOverflowQuestion> items;
+    public List<String> tags;
 
     @JsonProperty
-    public boolean has_more;
+    public String link;
 
     @JsonProperty
-    public int quota_max;
-
-    @JsonProperty
-    public int quota_remaining;
-
+    public int question_id;
 }
