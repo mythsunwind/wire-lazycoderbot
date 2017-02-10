@@ -30,7 +30,9 @@ import javax.ws.rs.core.Response;
 
 public class MessageHandler extends MessageHandlerBase {
 
-    private static final String INFOTEXT = "Hi, I'm lazycoderbot!";
+    private static final String INFOTEXT = "Hi, I'm Lazy Coder Bot!"
+            + " I search for complete solutions for you on stackoverflow when you're too lazy to code stuff yourself."
+            + " I support many languages. Just send a text with a language as first word. Example: **java bubblesort**";
     private static final String API_URL = "https://api.stackexchange.com";
 
     private BotConfig config;
@@ -200,21 +202,7 @@ public class MessageHandler extends MessageHandlerBase {
      */
     @Override
     public void onMemberJoin(WireClient client, ArrayList<String> userIds) {
-        try {
-            Collection<User> users = client.getUsers(userIds);
-            for (User user : users) {
-                Logger.info(String.format("onMemberJoin: user: %s/%s, bot: %s",
-                        user.id,
-                        user.name,
-                        client.getId()));
 
-                // say Hi to new participant
-                client.sendText("Hi there " + user.name);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Logger.error(e.getMessage());
-        }
     }
 
     /**
