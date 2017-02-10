@@ -16,6 +16,9 @@ public class StackOverflowAnswer {
     public String link;
 
     @JsonProperty
+    public int answer_id;
+
+    @JsonProperty
     public int question_id;
 
 }

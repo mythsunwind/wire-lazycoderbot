@@ -20,6 +20,7 @@ import org.glassfish.jersey.message.GZipEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +38,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     private BotConfig config;
     private HashMap<Integer, String> questions = new HashMap<>();
-    private HashMap<String, String> lastAnswers = new HashMap<>();
+    private HashMap<String, List<Integer>> lastAnswers = new HashMap<>();
 
     public MessageHandler(BotConfig config) {
         this.config = config;
