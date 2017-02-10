@@ -4,8 +4,7 @@ public class BotConfig extends com.wire.bots.sdk.Configuration {
 
     public String name;
     public int accent;
-    private String smallProfile;
-    private String bigProfile;
+    private String api_key;
 
     public String getName() {
         return name;
@@ -15,11 +14,8 @@ public class BotConfig extends com.wire.bots.sdk.Configuration {
         return accent;
     }
 
-    public String getSmallProfile() {
-        return smallProfile;
+    public String getApiKey() {
+        return api_key;
     }
 
-    public String getBigProfile() {
-        return bigProfile;
-    }
 }

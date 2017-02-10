@@ -12,7 +12,7 @@ public class StackOverflowQuestion {
     public List<String> tags;
 
     @JsonProperty
-    public String link;
+    public String title;
 
     @JsonProperty
     public int question_id;

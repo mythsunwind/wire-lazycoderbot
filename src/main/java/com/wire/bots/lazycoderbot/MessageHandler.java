@@ -15,6 +15,7 @@ import com.wire.bots.sdk.server.model.User;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.message.GZipEncoder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -41,8 +43,6 @@ public class MessageHandler extends MessageHandlerBase {
     @Override
     public void onText(WireClient client, TextMessage msg) {
         try {
-            Logger.info(String.format("Bot %s read a message", client.getId()));
-
             String message = msg.getText();
 
             if (message != null) {
@@ -52,7 +52,9 @@ public class MessageHandler extends MessageHandlerBase {
                 }
                 if (isValidQuery(message)) {
                     String language = getLanguage(message);
+                    Logger.info(String.format("Bot received query for language %s", language));
                     ClientConfig cfg = new ClientConfig(JacksonJsonProvider.class);
+                    cfg.register(GZipEncoder.class);
                     JerseyClient http = JerseyClientBuilder.createClient(cfg);
                     Response response = http.target(API_URL)
                             .path("2.2")
@@ -61,17 +63,21 @@ public class MessageHandler extends MessageHandlerBase {
                             .queryParam("sort", "votes")
                             .queryParam("tagged", language)
                             .queryParam("site", "stackoverflow")
+                            .queryParam("key", config.getApiKey())
                             .queryParam("intitle", message.substring(language.length()))
                             .request(MediaType.APPLICATION_JSON)
+                            .header(HttpHeaders.CONTENT_ENCODING, "identity")
                             .get();
                     if (!response.hasEntity()) {
                         client.sendText("No matching question found! You have to sit down and write the code yourself!");
                     } else {
                         StackOverflowSearch search = response.readEntity(StackOverflowSearch.class);
-                        if (search.quota_remaining < 1) {
+                        Logger.info(String.format("Bot has remaining quota for api: %s", search.quota_remaining));
+                        if(search.items.size() == 0) {
+                            client.sendText("No matching question found! You have to sit down and write the code yourself!");
+                        } else if (search.quota_remaining < 1) {
                             client.sendText("Quota of stackoverflow api exceeded");
                         } else {
-
                             String questionIds = "";
                             for (StackOverflowQuestion item : search.items) {
                                 if (questionIds.isEmpty()) {
@@ -89,6 +95,7 @@ public class MessageHandler extends MessageHandlerBase {
                                     .queryParam("sort", "votes")
                                     .queryParam("site", "stackoverflow")
                                     .queryParam("filter", "!-*f(6s6U7ofL")
+                                    .queryParam("key", config.getApiKey())
                                     .request(MediaType.APPLICATION_JSON)
                                     .get();
                             StackOverflowAnswers answers = response.readEntity(StackOverflowAnswers.class);
@@ -98,8 +105,8 @@ public class MessageHandler extends MessageHandlerBase {
                                 if (answers.items.size() > 0) {
                                     StackOverflowAnswer answer = answers.items.get(0);
                                     String body = sanatizeBody(replaceWithMarkDown(answer.body));
-                                    client.sendText(body + "\n\nAnswered by " + answer.owner.display_name + " on " +
-                                            "stackoverflow");
+                                    client.sendText(body + "\n*Answered by " + answer.owner.display_name + " on* " + answer
+                                            .link);
                                 } else {
                                     client.sendText("No answers");
                                 }
@@ -120,7 +127,7 @@ public class MessageHandler extends MessageHandlerBase {
 
     private String replaceWithMarkDown(String body) {
         body = body.replaceAll("<\\/?em>", "**");
-        body = body.replaceAll("<\\/?code>", "```");
+        body = body.replaceAll("<\\/?code>", "\n```\n");
         return body;
     }
 
@@ -140,10 +147,6 @@ public class MessageHandler extends MessageHandlerBase {
         } else {
             return null;
         }
-    }
-
-    private static void sendRandomText(WireClient client) throws Exception {
-        client.sendText(UUID.randomUUID().toString());
     }
 
     /**
@@ -241,13 +244,4 @@ public class MessageHandler extends MessageHandlerBase {
         return config.getAccent();
     }
 
-    @Override
-    public String getSmallProfilePicture() {
-        return config.getSmallProfile();
-    }
-
-    @Override
-    public String getBigProfilePicture() {
-        return config.getBigProfile();
-    }
 }
