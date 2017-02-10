@@ -154,6 +154,8 @@ public class MessageHandler extends MessageHandlerBase {
     private String replaceWithMarkDown(String body) {
         body = body.replaceAll("<\\/?em>", "**");
         body = body.replaceAll("<\\/?code>", "\n```\n");
+        // remove multiple linebreaks
+        body = body.replaceAll("[\r\n]+", "\n");
         return body;
     }
 
