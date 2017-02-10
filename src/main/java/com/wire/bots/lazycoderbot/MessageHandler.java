@@ -54,6 +54,8 @@ public class MessageHandler extends MessageHandlerBase {
                     for (StackOverflowAnswer answer : lastAnswers.get(client.getConversationId()).items) {
                         List<Integer> used = usedAnswerIds.get(client.getConversationId());
                         if (used != null && !used.contains(answer.answer_id)) {
+                            used.add(answer.answer_id);
+                            usedAnswerIds.put(client.getConversationId(), used);
                             postAnswer(client, questions, answer);
                             client.sendText("There could have been another answer...");
                             return;
@@ -119,6 +121,9 @@ public class MessageHandler extends MessageHandlerBase {
                             } else {
                                 if (answers.items.size() > 0) {
                                     lastAnswers.put(client.getConversationId(), answers);
+                                    List<Integer> used = new ArrayList<>();
+                                    used.add(answers.items.get(0).answer_id);
+                                    usedAnswerIds.put(client.getConversationId(), used);
                                     postAnswer(client, questions, answers.items.get(0));
                                 } else {
                                     client.sendText("No answers");
