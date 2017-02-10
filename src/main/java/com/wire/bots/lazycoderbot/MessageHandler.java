@@ -236,14 +236,4 @@ public class MessageHandler extends MessageHandlerBase {
     public int getAccentColour() {
         return config.getAccent();
     }
-
-    @Override
-    public String getSmallProfilePicture() {
-        return config.getSmallProfile();
-    }
-
-    @Override
-    public String getBigProfilePicture() {
-        return config.getBigProfile();
-    }
 }
