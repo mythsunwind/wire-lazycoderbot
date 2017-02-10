@@ -60,7 +60,7 @@ public class MessageHandler extends MessageHandlerBase {
                             return;
                         }
                     }
-                    client.sendText("No further answers for this query. You have to deal we the ones you got or write the " +
+                    client.sendText("No further answers for this query. You have to deal with the ones you got or write the " +
                             "code yourself!");
                     return;
                 }
