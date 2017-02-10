@@ -11,17 +11,14 @@ import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.TextMessage;
 import com.wire.bots.sdk.server.model.Conversation;
 import com.wire.bots.sdk.server.model.NewBot;
-import com.wire.bots.sdk.server.model.User;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.glassfish.jersey.message.GZipEncoder;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,8 +34,9 @@ public class MessageHandler extends MessageHandlerBase {
     private static final String API_URL = "https://api.stackexchange.com";
 
     private BotConfig config;
-    private HashMap<Integer, String> questions = new HashMap<>();
-    private HashMap<String, List<Integer>> lastAnswers = new HashMap<>();
+    HashMap<Integer, String> questions = new HashMap<>();
+    private HashMap<String, List<Integer>> usedAnswerIds = new HashMap<>();
+    private HashMap<String, StackOverflowAnswers> lastAnswers = new HashMap<>();
 
     public MessageHandler(BotConfig config) {
         this.config = config;
@@ -50,8 +48,19 @@ public class MessageHandler extends MessageHandlerBase {
             String message = msg.getText();
 
             if (message != null) {
-                if (message.toLowerCase().equals("more") && lastAnswers.containsKey(client.getConversationId())) {
-                    client.sendText("Feature not implemented yet!");
+                if (message.toLowerCase().equals("more")
+                        && usedAnswerIds.containsKey(client.getConversationId())
+                        && lastAnswers.containsKey(client.getConversationId())) {
+                    for (StackOverflowAnswer answer : lastAnswers.get(client.getConversationId()).items) {
+                        List<Integer> used = usedAnswerIds.get(client.getConversationId());
+                        if (used != null && !used.contains(answer.answer_id)) {
+                            postAnswer(client, questions, answer);
+                            client.sendText("There could have been another answer...");
+                            return;
+                        }
+                    }
+                    client.sendText("No further answers for this query. You have to deal we the ones you got or write the " +
+                            "code yourself!");
                     return;
                 }
                 if (isValidQuery(message)) {
@@ -77,12 +86,13 @@ public class MessageHandler extends MessageHandlerBase {
                     } else {
                         StackOverflowSearch search = response.readEntity(StackOverflowSearch.class);
                         Logger.info(String.format("Bot has remaining quota for api: %s", search.quota_remaining));
-                        if(search.items.size() == 0) {
+                        if (search.items.size() == 0) {
                             client.sendText("No matching question found! You have to sit down and write the code yourself!");
                         } else if (search.quota_remaining < 1) {
                             client.sendText("Quota of stackoverflow api exceeded");
                         } else {
                             String questionIds = "";
+                            questions.clear();
                             for (StackOverflowQuestion item : search.items) {
                                 questions.put(item.question_id, item.title);
                                 if (questionIds.isEmpty()) {
@@ -108,12 +118,8 @@ public class MessageHandler extends MessageHandlerBase {
                                 client.sendText("Quota of stackoverflow api exceeded");
                             } else {
                                 if (answers.items.size() > 0) {
-                                    StackOverflowAnswer answer = answers.items.get(0);
-                                    String body = sanatizeBody(replaceWithMarkDown(answer.body));
-                                    String question = questions.get(answer.question_id);
-                                    client.sendText("**" + question + "**\n"
-                                            + body + "\n"
-                                            +"*Answered by " + answer.owner.display_name + " on* " + answer.link);
+                                    lastAnswers.put(client.getConversationId(), answers);
+                                    postAnswer(client, questions, answers.items.get(0));
                                 } else {
                                     client.sendText("No answers");
                                 }
@@ -126,6 +132,15 @@ public class MessageHandler extends MessageHandlerBase {
             e.printStackTrace();
             Logger.error(e.getMessage());
         }
+    }
+
+    private void postAnswer(WireClient client, HashMap<Integer, String> questions, StackOverflowAnswer answer) throws
+            Exception {
+        String body = sanatizeBody(replaceWithMarkDown(answer.body));
+        String question = questions.get(answer.question_id);
+        client.sendText("**" + question + "**\n"
+                + body + "\n"
+                + "*Answered by " + answer.owner.display_name + " on* " + answer.link);
     }
 
     private String sanatizeBody(String body) {
