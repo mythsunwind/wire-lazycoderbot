@@ -57,7 +57,6 @@ public class MessageHandler extends MessageHandlerBase {
                             used.add(answer.answer_id);
                             usedAnswerIds.put(client.getConversationId(), used);
                             postAnswer(client, questions, answer);
-                            client.sendText("There could have been another answer...");
                             return;
                         }
                     }
