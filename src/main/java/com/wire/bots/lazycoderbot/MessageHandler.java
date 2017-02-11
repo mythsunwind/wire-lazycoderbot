@@ -47,7 +47,8 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             String message = msg.getText();
 
-            if (message != null) {
+            if (message != null && message.indexOf(" ") != -1) {
+                message = message.trim();
                 if (message.toLowerCase().equals("more")
                         && usedAnswerIds.containsKey(client.getConversationId())
                         && lastAnswers.containsKey(client.getConversationId())) {
@@ -78,7 +79,7 @@ public class MessageHandler extends MessageHandlerBase {
                             .queryParam("tagged", language)
                             .queryParam("site", "stackoverflow")
                             .queryParam("key", config.getApiKey())
-                            .queryParam("intitle", message.substring(language.length()))
+                            .queryParam("intitle", message.substring(message.indexOf(" ") + 1))
                             .request(MediaType.APPLICATION_JSON)
                             .header(HttpHeaders.CONTENT_ENCODING, "identity")
                             .get();
@@ -167,7 +168,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private String getLanguage(String message) {
-        String supportedLanguages = "(java|python|javascript|swift|perl|html|css|c++|c#|bash|scala|haskell|prolog)";
+        String supportedLanguages = "(java|python|javascript|swift|perl|html|css|c\+\+|c#|bash|scala|haskell|prolog)";
         Pattern pattern = Pattern.compile(String.format("^%s .*$", supportedLanguages));
         Matcher m = pattern.matcher(message);
         if (m.find()) {
