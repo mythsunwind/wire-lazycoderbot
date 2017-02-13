@@ -11,6 +11,7 @@ import com.wire.bots.sdk.WireClient;
 import com.wire.bots.sdk.models.TextMessage;
 import com.wire.bots.sdk.server.model.Conversation;
 import com.wire.bots.sdk.server.model.NewBot;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
@@ -149,7 +150,7 @@ public class MessageHandler extends MessageHandlerBase {
     }
 
     private String sanatizeBody(String body) {
-        return body.replaceAll("\\<.*?>", "");
+        return StringEscapeUtils.unescapeHtml4(body.replaceAll("\\<.*?>", ""));
     }
 
     private String replaceWithMarkDown(String body) {
