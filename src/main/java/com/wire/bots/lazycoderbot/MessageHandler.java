@@ -47,7 +47,7 @@ public class MessageHandler extends MessageHandlerBase {
         try {
             String message = msg.getText();
 
-            if (message != null && message.indexOf(" ") != -1) {
+            if (message != null) {
                 message = message.trim();
                 if (message.toLowerCase().equals("more")
                         && usedAnswerIds.containsKey(client.getConversationId())
@@ -65,7 +65,7 @@ public class MessageHandler extends MessageHandlerBase {
                             "code yourself!");
                     return;
                 }
-                if (isValidQuery(message)) {
+                if (isValidQuery(message) && message.contains(" ")) {
                     String language = getLanguage(message);
                     Logger.info(String.format("Bot received query for language %s", language));
                     ClientConfig cfg = new ClientConfig(JacksonJsonProvider.class);
